@@ -124,14 +124,19 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
+    background: white;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
 }
 
 .mermaid {
-    background-color: #fff;
+    background: white;
     padding: 16px;
     border-radius: 8px;
     width: 100%;
     text-align: center;
+    margin: 10px 0;
 }
 
 /* Mermaid specific styles */

@@ -3,47 +3,56 @@ import mermaid from 'mermaid';
 
 const MermaidDiagram = ({ diagram }) => {
   const mermaidRef = useRef(null);
+  const diagramId = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
 
   useEffect(() => {
-    // Check if window is defined (we're in a browser environment)
     if (typeof window !== 'undefined') {
       mermaid.initialize({
-        startOnLoad: false,
+        startOnLoad: true,
         theme: 'default',
         securityLevel: 'loose',
         logLevel: 'error',
-        // Add SSR configuration
-        startOnLoad: true,
-        ssr: true
+        deterministicIds: true,
+        fontFamily: 'monospace',
+        htmlLabels: true,
+        flowchart: {
+          htmlLabels: true,
+          useMaxWidth: true,
+        }
       });
     }
   }, []);
 
   useEffect(() => {
-    // Only run if we're in browser environment and have both diagram and ref
-    if (typeof window !== 'undefined' && diagram && mermaidRef.current) {
-      try {
-        // Clear previous content
-        mermaidRef.current.innerHTML = diagram;
-        
-        // Use async render
-        mermaid.run({
-          nodes: [mermaidRef.current],
-          suppressErrors: true
-        }).catch(error => {
+    const renderDiagram = async () => {
+      if (typeof window !== 'undefined' && diagram && mermaidRef.current) {
+        try {
+          // Clear previous content
+          mermaidRef.current.innerHTML = '';
+          
+          // Generate new SVG
+          const { svg } = await mermaid.render(diagramId.current, diagram);
+          
+          // Insert the SVG
+          mermaidRef.current.innerHTML = svg;
+        } catch (error) {
           console.error('Mermaid rendering failed:', error);
-        });
-      } catch (error) {
-        console.error('Mermaid rendering failed:', error);
+          // Fallback to displaying the diagram definition
+          mermaidRef.current.innerHTML = `
+            <pre style="color: red; background: #ffebee; padding: 10px; border-radius: 4px;">
+              ${diagram}
+            </pre>
+          `;
+        }
       }
-    }
+    };
+
+    renderDiagram();
   }, [diagram]);
 
   return (
-    <div className="mermaid-container">
-      <div ref={mermaidRef} className="mermaid">
-        {diagram}
-      </div>
+    <div className="mermaid-container" style={{ width: '100%', overflow: 'auto' }}>
+      <div ref={mermaidRef} className="mermaid" style={{ minHeight: '50px' }}></div>
     </div>
   );
 };
