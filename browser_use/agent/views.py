@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Optional, Type
 
-from openai import RateLimitError
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
 
 from browser_use.browser.views import BrowserState
@@ -102,6 +101,4 @@ class AgentError:
 		"""Format error message based on error type"""
 		if isinstance(error, ValidationError):
 			return f'{AgentError.VALIDATION_ERROR}\nDetails: {str(error)}'
-		if isinstance(error, RateLimitError):
-			return AgentError.RATE_LIMIT_ERROR
 		return f'Unexpected error: {str(error)}'

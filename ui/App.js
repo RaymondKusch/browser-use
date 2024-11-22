@@ -9,7 +9,6 @@ const App = () => {
     const [browserUrl, setBrowserUrl] = useState('');
     const [mermaidDiagram, setMermaidDiagram] = useState(`graph TD
     A[Start] --> B[Ready]`);
-    const [diagramDefinition, setDiagramDefinition] = useState('');
 
     const handleInstructionsChange = (e) => {
         setInstructions(e.target.value);
@@ -38,13 +37,6 @@ graph TD
         setMermaidDiagram(diagram.trim());
     };
 
-    // When you receive new agent output
-    const handleAgentOutput = (output) => {
-        // If the output contains a Mermaid diagram definition
-        const cleanDefinition = output.trim().replace(/^graph TD/, 'graph TD\n  ');
-        setDiagramDefinition(cleanDefinition);
-    };
-
     return (
         <div className="app-container">
             <div className="left-panel">
@@ -68,11 +60,6 @@ graph TD
             </div>
             <div className="right-panel">
                 <BrowserView url={browserUrl} />
-            </div>
-            <div>
-                <MermaidDiagram 
-                    diagram={diagramDefinition || 'graph TD\n  A[Start] --> B[Ready]'} 
-                />
             </div>
         </div>
     );
