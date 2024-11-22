@@ -43,6 +43,26 @@ T = TypeVar('T', bound=BaseModel)
 
 
 class Agent:
+	"""
+	Agent class responsible for executing tasks using a language model and a browser controller.
+
+	Attributes:
+		agent_id (str): Unique identifier for the agent.
+		task (str): The task to be executed by the agent.
+		llm (BaseChatModel): The language model used by the agent.
+		controller (Optional[Controller]): The browser controller used by the agent.
+		use_vision (bool): Flag to indicate if vision should be used.
+		save_conversation_path (Optional[str]): Path to save the conversation history.
+		max_failures (int): Maximum number of consecutive failures allowed.
+		retry_delay (int): Delay between retries in case of failures.
+		system_prompt_class (Type[SystemPrompt]): The class used for system prompts.
+		messages (list): List of messages exchanged during the task.
+		history (list): List of AgentHistory objects representing the task history.
+		n_steps (int): Number of steps executed.
+		consecutive_failures (int): Number of consecutive failures encountered.
+		usage_metadata (TokenUsage): Metadata for token usage.
+	"""
+
 	def __init__(
 		self,
 		task: str,
@@ -110,11 +130,22 @@ class Agent:
 		self.set_task(self.task)
 
 	def set_task(self, task: str) -> None:
+		"""
+		Set the task for the agent and add it to the message history.
+
+		Args:
+			task (str): The task to be executed by the agent.
+		"""
 		self.messages.append(HumanMessage(content=f'Your task is: {task}'))
 
 	@time_execution_async('--step')
 	async def step(self) -> None:
-		"""Execute one step of the task"""
+		"""
+		Execute one step of the task.
+
+		Retrieves the current state of the browser, gets the next action from the language model,
+		and performs the action using the controller.
+		"""
 		logger.info(f'\n📍 Step {self.n_steps}')
 		state = self.controller.browser.get_state(use_vision=self.use_vision)
 
@@ -141,25 +172,39 @@ class Agent:
 		self._make_history_item(model_output, state, result)
 
 	def _handle_step_error(self, error: Exception, state: BrowserState) -> ActionResult:
-		"""Handle all types of errors that can occur during a step"""
-		error_msg = AgentError.format_error(error)
-		prefix = f'❌ Result failed {self.consecutive_failures + 1}/{self.max_failures} times:\n '
+			"""
+			Handle errors that occur during a step.
 
-		if isinstance(error, (ValidationError, ValueError)):
-			logger.error(f'{prefix}{error_msg}')
-			self.consecutive_failures += 1
-		elif isinstance(error, RateLimitError):
-			logger.warning(f'{prefix}{error_msg}')
-			time.sleep(self.retry_delay)
-			self.consecutive_failures += 1
-		else:
-			logger.error(f'{prefix}{error_msg}')
-			self.consecutive_failures += 1
+			Args:
+				error (Exception): The error that occurred.
+				state (BrowserState): The current state of the browser.
 
-		return ActionResult(error=error_msg)
+			Returns:
+				ActionResult: The result of handling the error.
+			"""
+			error_msg = AgentError.format_error(error)
+			prefix = f'❌ Result failed {self.consecutive_failures + 1}/{self.max_failures} times:\n '
+
+			if isinstance(error, (ValidationError, ValueError)):
+				logger.error(f'{prefix}{error_msg}')
+				self.consecutive_failures += 1
+			elif isinstance(error, RateLimitError):
+				logger.warning(f'{prefix}{error_msg}')
+				time.sleep(self.retry_delay)
+				self.consecutive_failures += 1
+			else:
+				logger.error(f'{prefix}{error_msg}')
+				self.consecutive_failures += 1
+
+			return ActionResult(error=error_msg)
 
 	def _update_messages_with_result(self, result: ActionResult) -> None:
-		"""Update message history with action results"""
+		"""
+		Update the message history with the result of an action.
+
+		Args:
+			result (ActionResult): The result of the action.
+		"""
 		if result.extracted_content:
 			self.messages.append(HumanMessage(content=result.extracted_content))
 		if result.error:
@@ -171,13 +216,28 @@ class Agent:
 		state: BrowserState,
 		result: ActionResult,
 	) -> None:
-		"""Create and store history item"""
-		history_item = AgentHistory(model_output=model_output, result=result, state=state)
-		self.history.append(history_item)
+			"""
+			Create and store a history item.
+
+			Args:
+				model_output (AgentOutput | None): The output from the language model.
+				state (BrowserState): The current state of the browser.
+				result (ActionResult): The result of the action.
+			"""
+			history_item = AgentHistory(model_output=model_output, result=result, state=state)
+			self.history.append(history_item)
 
 	@time_execution_async('--get_next_action')
 	async def get_next_action(self, state: BrowserState) -> AgentOutput:
-		"""Get next action from LLM based on current state"""
+		"""
+		Get the next action from the language model based on the current state.
+
+		Args:
+			state (BrowserState): The current state of the browser.
+
+		Returns:
+			AgentOutput: The output from the language model.
+		"""
 		new_message = AgentMessagePrompt(state).get_user_message()
 		input_messages = self.messages + [new_message]
 
@@ -196,9 +256,8 @@ class Agent:
 		"""
 		Calculate the cost of tokens used in a request based on the model.
 
-		:param usage_metadata: TokenUsage model containing token usage details.
-		:param model_name: The name of the model used.
-		:return: Cost of the tokens used.
+		Returns:
+			float: The cost of the tokens used.
 		"""
 		if isinstance(self.llm, ChatOpenAI):
 			model_name = self.llm.model_name
@@ -234,9 +293,10 @@ class Agent:
 
 	def _update_usage_metadata(self, raw_response: AIMessage) -> None:
 		"""
-		Process the response and update usage.
+		Process the response and update usage metadata.
 
-		:param raw_response: The response object containing usage metadata.
+		Args:
+			raw_response (AIMessage): The raw response from the language model.
 		"""
 		# only supported for openai models for now
 		if isinstance(self.llm, ChatAnthropic):
@@ -305,7 +365,12 @@ class Agent:
 		self._log_usage_metadata(usage_metadata)
 
 	def _log_usage_metadata(self, current_tokens: Optional[TokenUsage] = None) -> None:
-		"""Log the usage metadata"""
+		"""
+		Log the usage metadata.
+
+		Args:
+			current_tokens (Optional[TokenUsage]): The current token usage.
+		"""
 		total_cost = self._calc_token_cost()
 		total_tokens = self.usage_metadata.total_tokens
 		logger.debug(
@@ -318,14 +383,25 @@ class Agent:
 			)
 
 	def _update_message_history(self, state: BrowserState, response: Any) -> None:
-		"""Update message history with new interactions"""
+		"""
+		Update the message history with new interactions.
+
+		Args:
+			state (BrowserState): The current state of the browser.
+			response (Any): The response from the language model.
+		"""
 		history_message = AgentMessagePrompt(state).get_message_for_history()
 		self.messages.append(history_message)
 		self.messages.append(AIMessage(content=response.model_dump_json(exclude_unset=True)))
 		self.n_steps += 1
 
 	def _log_response(self, response: Any) -> None:
-		"""Log the model's response"""
+		"""
+		Log the model's response.
+
+		Args:
+			response (Any): The response from the language model.
+		"""
 		if 'Success' in response.current_state.valuation_previous_goal:
 			emoji = '👍'
 		elif 'Failed' in response.current_state.valuation_previous_goal:
@@ -339,7 +415,13 @@ class Agent:
 		logger.info(f'🛠️ Action: {response.action.model_dump_json(exclude_unset=True)}')
 
 	def _save_conversation(self, input_messages: list[BaseMessage], response: Any) -> None:
-		"""Save conversation history to file if path is specified"""
+		"""
+		Save conversation history to file if path is specified.
+
+		Args:
+			input_messages (list[BaseMessage]): The list of input messages.
+			response (Any): The response from the language model.
+		"""
 		if not self.save_conversation_path:
 			return
 
@@ -351,7 +433,13 @@ class Agent:
 			self._write_response_to_file(f, response)
 
 	def _write_messages_to_file(self, f: Any, messages: list[BaseMessage]) -> None:
-		"""Write messages to conversation file"""
+		"""
+		Write messages to conversation file.
+
+		Args:
+			f (Any): The file object to write to.
+			messages (list[BaseMessage]): The list of messages to write.
+		"""
 		for message in messages:
 			f.write(f' {message.__class__.__name__} \n')
 
@@ -369,12 +457,26 @@ class Agent:
 			f.write('\n')
 
 	def _write_response_to_file(self, f: Any, response: Any) -> None:
-		"""Write model response to conversation file"""
+		"""
+		Write model response to conversation file.
+
+		Args:
+			f (Any): The file object to write to.
+			response (Any): The response from the language model.
+		"""
 		f.write(' RESPONSE\n')
 		f.write(json.dumps(json.loads(response.model_dump_json(exclude_unset=True)), indent=2))
 
 	async def run(self, max_steps: int = 100) -> list[AgentHistory]:
-		"""Execute the task with maximum number of steps"""
+		"""
+		Execute the task with a maximum number of steps.
+
+		Args:
+			max_steps (int): The maximum number of steps to execute.
+
+		Returns:
+			list[AgentHistory]: The history of the task execution.
+		"""
 		try:
 			logger.info(f'🚀 Starting task: {self.task}')
 
@@ -412,18 +514,33 @@ class Agent:
 				self.controller.browser.close()
 
 	def _too_many_failures(self) -> bool:
-		"""Check if we should stop due to too many failures"""
+		"""
+		Check if the task should stop due to too many consecutive failures.
+
+		Returns:
+			bool: True if the task should stop, False otherwise.
+		"""
 		if self.consecutive_failures >= self.max_failures:
 			logger.error(f'❌ Stopping due to {self.max_failures} consecutive failures')
 			return True
 		return False
 
 	def _is_task_complete(self) -> bool:
-		"""Check if the task has been completed successfully"""
+		"""
+		Check if the task has been completed successfully.
+
+		Returns:
+			bool: True if the task is complete, False otherwise.
+		"""
 		return bool(self.history and self.history[-1].result.is_done)
 
 	def generate_mermaid_diagram(self) -> str:
-		"""Generate a mermaid diagram from the agent's steps"""
+		"""
+		Generate a mermaid diagram from the agent's steps.
+
+		Returns:
+			str: The mermaid diagram representing the task steps.
+		"""
 		diagram = "graph TD\n"
 		for i, step in enumerate(self.history):
 			content = step.result.extracted_content or step.result.error or "No content"

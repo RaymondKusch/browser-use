@@ -3,6 +3,9 @@ import AgentReasoning from './AgentReasoning';
 import BrowserView from './BrowserView';
 import MermaidDiagram from './MermaidDiagram';
 
+/**
+ * Main App component that manages the state and interactions.
+ */
 const App = () => {
     const [instructions, setInstructions] = useState('');
     const [reasoning, setReasoning] = useState([]);
@@ -11,10 +14,17 @@ const App = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
 
+    /**
+     * Handle change in instructions input.
+     * @param {Event} e - The input change event.
+     */
     const handleInstructionsChange = (e) => {
         setInstructions(e.target.value);
     };
 
+    /**
+     * Handle running the agent with the provided instructions.
+     */
     const handleRunAgent = async () => {
         setIsLoading(true);
         setError(null);

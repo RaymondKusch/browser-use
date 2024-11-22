@@ -1,5 +1,9 @@
 const path = require('path');
 
+/**
+ * Webpack configuration for the frontend.
+ * @type {import('webpack').Configuration}
+ */
 module.exports = {
   entry: './index.js',
   output: {
