@@ -14,7 +14,23 @@ const App = () => {
     };
 
     const handleRunAgent = () => {
-        // Logic to run the agent and update reasoning, browserUrl, and mermaidDiagram
+        // Simulate agent reasoning steps
+        const reasoningSteps = [
+            'Received instructions',
+            'Parsed instructions',
+            'Initiated action sequence',
+            'Action sequence completed',
+        ];
+        setReasoning(reasoningSteps);
+
+        // Example Mermaid diagram
+        const diagram = `
+            graph TD;
+                A[Start] --> B[Process Instructions];
+                B --> C[Action Sequence];
+                C --> D[End];
+        `;
+        setMermaidDiagram(diagram);
     };
 
     return (

@@ -54,8 +54,18 @@ class Browser:
 			chrome_options.add_argument('--disable-blink-features=AutomationControlled')
 			chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
 			chrome_options.add_experimental_option('useAutomationExtension', False)
+			
+			# Container environment settings
 			chrome_options.add_argument('--no-sandbox')
+			chrome_options.add_argument('--disable-dev-shm-usage')
+			chrome_options.add_argument('--disable-gpu')
+			chrome_options.add_argument('--remote-debugging-port=9222')
+			chrome_options.add_argument('--disable-setuid-sandbox')
+			chrome_options.add_argument('--single-process')
+			
+			# Window settings
 			chrome_options.add_argument('--window-size=1280,1024')
+			chrome_options.add_argument('--start-maximized')
 			chrome_options.add_argument('--disable-extensions')
 
 			# Background process optimization
@@ -64,13 +74,18 @@ class Browser:
 
 			# Additional stealth settings
 			chrome_options.add_argument('--disable-infobars')
-			# Much better when working in non-headless mode
 			chrome_options.add_argument('--disable-backgrounding-occluded-windows')
 			chrome_options.add_argument('--disable-renderer-backgrounding')
 
+			# Force headless mode for container environment
+			chrome_options.add_argument('--headless=new')
+
 			# Initialize the Chrome driver with better error handling
 			service = ChromeService(ChromeDriverManager().install())
+			logger.info("Attempting to start Chrome with service path: %s", service.path)
+			
 			driver = webdriver.Chrome(service=service, options=chrome_options)
+			logger.info("Chrome driver started successfully")
 
 			# Execute stealth scripts
 			driver.execute_cdp_cmd(
@@ -105,7 +120,7 @@ class Browser:
 			return driver
 
 		except Exception as e:
-			logger.error(f'Failed to initialize Chrome driver: {str(e)}')
+			logger.error(f'Failed to initialize Chrome driver: {str(e)}', exc_info=True)
 			# Clean up any existing driver
 			if hasattr(self, 'driver') and self.driver:
 				try:
@@ -189,7 +204,7 @@ class Browser:
 		"""
 		Close the browser driver when instance is destroyed.
 		"""
-		if self.driver is not None:
+		if hasattr(self, 'driver') and self.driver is not None:
 			self.close()
 
 	# region - Browser Actions
