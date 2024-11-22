@@ -1,6 +1,12 @@
 import React, { useEffect, useRef } from 'react';
 import mermaid from 'mermaid';
 
+/**
+ * MermaidDiagram component that displays a mermaid diagram.
+ * @param {Object} props - The component props.
+ * @param {string} props.diagram - The mermaid diagram definition.
+ * @returns {JSX.Element} The MermaidDiagram component.
+ */
 const MermaidDiagram = ({ diagram }) => {
   const mermaidRef = useRef(null);
   const diagramId = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);

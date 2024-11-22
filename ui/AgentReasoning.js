@@ -1,5 +1,11 @@
 import React from 'react';
 
+/**
+ * AgentReasoning component that displays the agent's reasoning steps.
+ * @param {Object} props - The component props.
+ * @param {Array} props.reasoning - The reasoning steps to display.
+ * @returns {JSX.Element} The AgentReasoning component.
+ */
 const AgentReasoning = ({ reasoning }) => {
     return (
         <div className="agent-reasoning">

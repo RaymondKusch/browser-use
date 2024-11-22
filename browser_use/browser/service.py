@@ -51,6 +51,19 @@ DISABLE_RENDERER_BACKGROUNDING = '--disable-renderer-backgrounding'
 
 
 class Browser:
+    """
+    Browser class for managing Selenium WebDriver with enhanced capabilities.
+
+    Attributes:
+        headless (bool): Flag to run the browser in headless mode.
+        keep_open (bool): Flag to keep the browser open after operations.
+        driver (webdriver.Chrome | None): The Selenium WebDriver instance.
+        _tab_cache (dict): Cache for storing tab information.
+        _current_handle (str | None): The current tab handle.
+        _ob (Screenshot.Screenshot): Screenshot utility instance.
+        _cached_state (BrowserState): Cached state of the browser.
+    """
+
     def __init__(self, headless: bool = False, keep_open: bool = False):
         self.headless = headless
         self.keep_open = keep_open
@@ -63,7 +76,12 @@ class Browser:
         self._cached_state = self._update_state()
 
     def _setup_webdriver(self) -> webdriver.Chrome:
-        """Sets up and returns a Selenium WebDriver instance with anti-detection measures."""
+        """
+        Sets up and returns a Selenium WebDriver instance with anti-detection measures.
+
+        Returns:
+            webdriver.Chrome: The configured Selenium WebDriver instance.
+        """
         try:
             # if webdriver is not starting, try to kill it or rm -rf ~/.wdm
             chrome_options = Options()
@@ -151,6 +169,12 @@ class Browser:
             raise
 
     def _get_driver(self) -> webdriver.Chrome:
+        """
+        Returns the Selenium WebDriver instance, initializing it if necessary.
+
+        Returns:
+            webdriver.Chrome: The Selenium WebDriver instance.
+        """
         if self.driver is None:
             self.driver = self._setup_webdriver()
         return self.driver
@@ -187,7 +211,13 @@ class Browser:
 
     def _update_state(self, use_vision: bool = False) -> BrowserState:
         """
-        Update and return state.
+        Update and return the current state of the browser.
+
+        Args:
+            use_vision (bool): Flag to include a screenshot in the state.
+
+        Returns:
+            BrowserState: The updated state of the browser.
         """
         driver = self._get_driver()
         dom_service = DomService(driver)
@@ -210,6 +240,12 @@ class Browser:
         return self.current_state
 
     def close(self, force: bool = False):
+        """
+        Close the browser driver.
+
+        Args:
+            force (bool): Flag to force close the browser.
+        """
         if not self.keep_open or force:
             if self.driver:
                 driver = self._get_driver()
@@ -232,6 +268,13 @@ class Browser:
     def take_screenshot(self, selector_map: SelectorMap | None, full_page: bool = False) -> str:
         """
         Returns a base64 encoded screenshot of the current page.
+
+        Args:
+            selector_map (SelectorMap | None): Map of selectors to highlight.
+            full_page (bool): Flag to take a full-page screenshot.
+
+        Returns:
+            str: Base64 encoded screenshot.
         """
         driver = self._get_driver()
 
@@ -265,6 +308,12 @@ class Browser:
         return screenshot
 
     def highlight_selector_map_elements(self, selector_map: SelectorMap):
+        """
+        Highlights elements on the page based on the selector map.
+
+        Args:
+            selector_map (SelectorMap): Map of selectors to highlight.
+        """
         driver = self._get_driver()
         # First remove any existing highlights/labels
         self.remove_highlights()
@@ -307,7 +356,7 @@ class Browser:
 
     def remove_highlights(self):
         """
-        Removes all highlight outlines and labels created by highlight_selector_map_elements
+        Removes all highlight outlines and labels created by highlight_selector_map_elements.
         """
         driver = self._get_driver()
         driver.execute_script(
@@ -330,10 +379,23 @@ class Browser:
 
     # region - User Actions
     def _webdriver_wait(self):
+        """
+        Returns a WebDriverWait instance with a 10-second timeout.
+
+        Returns:
+            WebDriverWait: The WebDriverWait instance.
+        """
         driver = self._get_driver()
         return WebDriverWait(driver, 10)
 
     def _input_text_by_xpath(self, xpath: str, text: str):
+        """
+        Inputs text into an element identified by its XPath.
+
+        Args:
+            xpath (str): The XPath of the element.
+            text (str): The text to input.
+        """
         driver = self._get_driver()
 
         try:
@@ -360,6 +422,9 @@ class Browser:
     def _click_element_by_xpath(self, xpath: str):
         """
         Optimized method to click an element using xpath.
+
+        Args:
+            xpath (str): The XPath of the element to click.
         """
         driver = self._get_driver()
         wait = self._webdriver_wait()
@@ -409,7 +474,9 @@ class Browser:
             raise Exception(f'Failed to click element with xpath: {xpath}. Error: {str(e)}')
 
     def handle_new_tab(self) -> None:
-        """Handle newly opened tab and switch to it"""
+        """
+        Handle newly opened tab and switch to it.
+        """
         driver = self._get_driver()
         handles = driver.window_handles
         new_handle = handles[-1]  # Get most recently opened handle
@@ -426,7 +493,12 @@ class Browser:
         self._tab_cache[new_handle] = tab_info
 
     def get_tabs_info(self) -> list[TabInfo]:
-        """Get information about all tabs"""
+        """
+        Get information about all tabs.
+
+        Returns:
+            list[TabInfo]: List of tab information.
+        """
         driver = self._get_driver()
         current_handle = driver.current_window_handle
         self._current_handle = current_handle
@@ -457,22 +529,61 @@ class Browser:
     def get_state(self, use_vision: bool = False) -> BrowserState:
         """
         Get the current state of the browser including page content and tab information.
+
+        Args:
+            use_vision (bool): Flag to include a screenshot in the state.
+
+        Returns:
+            BrowserState: The current state of the browser.
         """
         self._cached_state = self._update_state(use_vision=use_vision)
         return self._cached_state
 
     @property
     def selector_map(self) -> SelectorMap:
+        """
+        Returns the selector map of the current state.
+
+        Returns:
+            SelectorMap: The selector map.
+        """
         return self._cached_state.selector_map
 
     def xpath(self, index: int) -> str:
+        """
+        Returns the XPath for a given index.
+
+        Args:
+            index (int): The index of the element.
+
+        Returns:
+            str: The XPath of the element.
+        """
         return self.selector_map[index]
 
     def get_element(self, index: int) -> WebElement:
+        """
+        Returns the WebElement for a given index.
+
+        Args:
+            index (int): The index of the element.
+
+        Returns:
+            WebElement: The WebElement.
+        """
         driver = self._get_driver()
         return driver.find_element(By.XPATH, self.xpath(index))
 
     def wait_for_element(self, css_selector: str, timeout: int = 10) -> WebElement:
-        """Wait for an element to appear and return it."""
+        """
+        Wait for an element to appear and return it.
+
+        Args:
+            css_selector (str): The CSS selector of the element.
+            timeout (int): The timeout in seconds.
+
+        Returns:
+            WebElement: The WebElement.
+        """
         wait = WebDriverWait(self._get_driver(), timeout)
         return wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, css_selector)))

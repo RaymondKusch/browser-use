@@ -25,7 +25,21 @@ logger = logging.getLogger(__name__)
 
 
 class Controller:
+	"""
+	Controller class responsible for managing browser actions and interactions.
+
+	Attributes:
+		browser (Browser): The browser instance used for automation.
+		registry (Registry): The registry for managing actions.
+	"""
+
 	def __init__(self, keep_open: bool = False):
+		"""
+		Initialize the Controller.
+
+		Args:
+			keep_open (bool): Flag to keep the browser open after operations.
+		"""
 		self.browser = Browser(keep_open=keep_open)
 		self.registry = Registry()
 		self._register_default_actions()
@@ -172,15 +186,26 @@ class Controller:
 			driver.execute_script(f'window.scrollBy(0, -{params.amount});')
 
 	def action(self, description: str, **kwargs):
-		"""Decorator for registering custom actions
+			"""
+			Decorator for registering custom actions.
 
-		@param description: Describe the LLM what the function does (better description == better function calling)
-		"""
-		return self.registry.action(description, **kwargs)
+			Args:
+				description (str): Description of the action for the LLM.
+				**kwargs: Additional arguments for the action.
+			"""
+			return self.registry.action(description, **kwargs)
 
 	@time_execution_sync('--act')
 	def act(self, action: ActionModel) -> ActionResult:
-		"""Execute an action"""
+		"""
+		Execute an action.
+
+		Args:
+			action (ActionModel): The action to be executed.
+
+		Returns:
+			ActionResult: The result of the action.
+		"""
 		try:
 			for action_name, params in action.model_dump(exclude_unset=True).items():
 				if params is not None:
@@ -198,9 +223,19 @@ class Controller:
 			raise e
 
 	def get_browser_state(self) -> dict:
-		"""Return the current state of the browser"""
+		"""
+		Return the current state of the browser.
+
+		Returns:
+			dict: The current state of the browser.
+		"""
 		return self.browser.get_state().model_dump()
 
 	def get_browser_url(self) -> str:
-		"""Return the current URL of the browser"""
+		"""
+		Return the current URL of the browser.
+
+		Returns:
+			str: The current URL of the browser.
+		"""
 		return self.browser.get_state().url
