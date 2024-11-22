@@ -7,9 +7,18 @@ Make websites accessible for AI agents 🤖.
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Discord](https://img.shields.io/discord/1303749220842340412?color=7289DA&label=Discord&logo=discord&logoColor=white)](https://link.browser-use.com/discord)
 
-Browser use is the easiest way to connect your AI agents with the browser. If you have used Browser Use for your project feel free to show it off in our [Discord](https://link.browser-use.com/discord).
+## Table of Contents
 
-# Quick start
+* [Quick Start](#quick-start)
+* [Demos](#demos)
+* [Features](#features-)
+* [Register Custom Actions](#register-custom-actions)
+* [Get XPath History](#get-xpath-history)
+* [More Examples](#more-examples)
+* [Telemetry](#telemetry)
+* [Contributing](#contributing)
+
+## Quick Start
 
 With pip:
 
@@ -39,7 +48,7 @@ OPENAI_API_KEY=
 ANTHROPIC_API_KEY=
 ```
 
-# Demos
+## Demos
 
 <div style="font-size: 4em;">
     Prompt: Find flights on kayak.com from Zurich to Beijing on 25.12.2024 to 02.02.2025. (8x speed)
@@ -58,7 +67,7 @@ ANTHROPIC_API_KEY=
 
 https://github.com/user-attachments/assets/de73ee39-432c-4b97-b4e8-939fd7f323b3
 
-# Features ⭐
+## Features ⭐
 
 - Vision + html extraction
 - Automatic multi-tab management
@@ -67,7 +76,7 @@ https://github.com/user-attachments/assets/de73ee39-432c-4b97-b4e8-939fd7f323b3
 - Self-correcting
 - Use any LLM supported by LangChain (e.g. gpt4o, gpt4o mini, claude 3.5 sonnet, llama 3.1 405b, etc.)
 
-## Register custom actions
+## Register Custom Actions
 
 If you want to add custom actions your agent can take, you can register them like this:
 
@@ -110,7 +119,7 @@ agent = Agent(task=task, llm=model, controller=controller)
 await agent.run()
 ```
 
-## Get XPath history
+## Get XPath History
 
 To get the entire history of everything the agent has done, you can use the output of the `run` method:
 
@@ -120,7 +129,7 @@ history: list[AgentHistory] = await agent.run()
 print(history)
 ```
 
-## More examples
+## More Examples
 
 For more examples see the [examples](examples) folder or join the [Discord](https://link.browser-use.com/discord) and show off your project.
 
@@ -130,11 +139,11 @@ We collect anonymous usage data to help us understand how the library is being u
 
 You can opt out of telemetry by setting the `ANONYMIZED_TELEMETRY=false` environment variable.
 
-# Contributing
+## Contributing
 
 Contributions are welcome! Feel free to open issues for bugs or feature requests.
 
-## Local Setup
+### Local Setup
 
 1. Create a virtual environment and install dependencies:
 

@@ -1,5 +1,16 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import mermaid from 'mermaid';
 import App from './App';
+import './styles.css';
 
-ReactDOM.render(<App />, document.getElementById('root'));
+// Initialize mermaid
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose',
+});
+
+const container = document.getElementById('root');
+const root = createRoot(container);
+root.render(<App />);
