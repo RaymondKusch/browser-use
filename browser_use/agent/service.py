@@ -421,3 +421,12 @@ class Agent:
 	def _is_task_complete(self) -> bool:
 		"""Check if the task has been completed successfully"""
 		return bool(self.history and self.history[-1].result.is_done)
+
+	def generate_mermaid_diagram(self) -> str:
+		"""Generate a mermaid diagram from the agent's steps"""
+		diagram = "graph TD\n"
+		for i, step in enumerate(self.history):
+			diagram += f"    step{i}['{step.result.extracted_content or step.result.error}']\n"
+			if i > 0:
+				diagram += f"    step{i-1} --> step{i}\n"
+		return diagram

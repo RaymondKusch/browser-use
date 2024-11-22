@@ -196,3 +196,11 @@ class Controller:
 			return ActionResult()
 		except Exception as e:
 			raise e
+
+	def get_browser_state(self) -> dict:
+		"""Return the current state of the browser"""
+		return self.browser.get_state().model_dump()
+
+	def get_browser_url(self) -> str:
+		"""Return the current URL of the browser"""
+		return self.browser.get_state().url
