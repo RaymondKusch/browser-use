@@ -426,7 +426,9 @@ class Agent:
 		"""Generate a mermaid diagram from the agent's steps"""
 		diagram = "graph TD\n"
 		for i, step in enumerate(self.history):
-			diagram += f"    step{i}['{step.result.extracted_content or step.result.error}']\n"
+			content = step.result.extracted_content or step.result.error or "No content"
+			diagram += f"    step{i}['{content}']\n"
 			if i > 0:
 				diagram += f"    step{i-1} --> step{i}\n"
+		logger.debug(f'Generated Mermaid Diagram:\n{diagram}')
 		return diagram

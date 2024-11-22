@@ -7,34 +7,47 @@ const App = () => {
     const [instructions, setInstructions] = useState('');
     const [reasoning, setReasoning] = useState([]);
     const [browserUrl, setBrowserUrl] = useState('');
-    const [mermaidDiagram, setMermaidDiagram] = useState(`graph TD
-    A[Start] --> B[Ready]`);
+    const [mermaidDiagram, setMermaidDiagram] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
 
     const handleInstructionsChange = (e) => {
         setInstructions(e.target.value);
     };
 
-    const handleRunAgent = () => {
-        // Simulate agent reasoning steps
-        const reasoningSteps = [
-            'Received instructions',
-            'Parsed instructions',
-            'Initiated action sequence',
-            'Action sequence completed',
-        ];
-        setReasoning(reasoningSteps);
+    const handleRunAgent = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+            const response = await fetch('/api/run-task', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ task: instructions }),
+            });
 
-        // Generate Mermaid diagram based on reasoning steps
-        const diagram = `
-graph TD
-    A[Start] --> B[Receive Instructions]
-    B --> C[Parse Instructions]
-    C --> D[Execute Actions]
-    D --> E[Complete]
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style E fill:#9f9,stroke:#333,stroke-width:2px
-`;
-        setMermaidDiagram(diagram.trim());
+            if (!response.ok) {
+                throw new Error('Failed to run task');
+            }
+
+            const data = await response.json();
+            
+            // Update reasoning steps
+            const steps = data.steps.map(step => 
+                step.extracted_content || step.error || 'Processing...'
+            );
+            setReasoning(steps);
+
+            // Update mermaid diagram
+            setMermaidDiagram(data.mermaid_diagram);
+
+        } catch (err) {
+            setError(err.message);
+            console.error('Error running task:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
@@ -46,11 +59,21 @@ graph TD
                         onChange={handleInstructionsChange}
                         placeholder="Enter instructions for the agent"
                         className="instructions-input"
+                        disabled={isLoading}
                     />
-                    <button onClick={handleRunAgent} className="run-button">
-                        Run Agent
+                    <button 
+                        onClick={handleRunAgent} 
+                        className="run-button"
+                        disabled={isLoading || !instructions.trim()}
+                    >
+                        {isLoading ? 'Running...' : 'Run Agent'}
                     </button>
                 </div>
+                {error && (
+                    <div className="error-message">
+                        {error}
+                    </div>
+                )}
                 <div className="reasoning-section">
                     <AgentReasoning reasoning={reasoning} />
                 </div>
